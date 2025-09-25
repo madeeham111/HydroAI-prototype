@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>भूजल सहायक - Groundwater Assistant</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 10px;
+        }
+        
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+            min-height: 90vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .header {
+            background: linear-gradient(45deg, #4CAF50, #2E7D32);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+        }
+        
+        .header::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 15px solid transparent;
+            border-right: 15px solid transparent;
+            border-top: 10px solid #2E7D32;
+        }
+        
+        .header h1 {
+            font-size: 1.5em;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        .header p {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+        
+        .chat-container {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background: linear-gradient(to bottom, #f8f9fa, #ffffff);
+        }
+        
+        .message {
+            margin-bottom: 15px;
+            animation: slideIn 0.3s ease;
+        }
+        
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .bot-message {
+            display: flex;
+            align-items: flex-start;
+        }
+        
+        .bot-avatar {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(45deg, #4CAF50, #66BB6A);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            font-weight: bold;
+            color: white;
+            font-size: 16px;
+        }
+        
+        .bot-text {
+            background: #f1f3f4;
+            padding: 12px 16px;
+            border-radius: 18px 18px 18px 4px;
+            max-width: 80%;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .user-message {
+            display: flex;
+            justify-content: flex-end;
+            align-items: flex-start;
+        }
+        
+        .user-text {
+            background: linear-gradient(45deg, #2196F3, #1976D2);
+            color: white;
+            padding: 12px 16px;
+            border-radius: 18px 18px 4px 18px;
+            max-width: 80%;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .input-container {
+            padding: 20px;
+            border-top: 1px solid #eee;
+            background: white;
+        }
+        
+        .language-selector {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .lang-btn {
+            padding: 6px 12px;
+            border: 2px solid #ddd;
+            background: white;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.8em;
+            transition: all 0.3s ease;
+        }
+        
+        .lang-btn:hover, .lang-btn.active {
+            background: #4CAF50;
+            color: white;
+            border-color: #4CAF50;
+            transform: scale(1.05);
+        }
+        
+        .input-group {
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+        }
+        
+        .input-field {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid #ddd;
+            border-radius: 25px;
+            outline: none;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            min-height: 50px;
+            resize: none;
+        }
+        
+        .input-field:focus {
+            border-color: #4CAF50;
+            box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+        }
+        
+        .send-btn {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(45deg, #4CAF50, #66BB6A);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
+        .send-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.2);
+        }
+        
+        .send-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .typing-indicator {
+            display: none;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .typing-dots {
+            background: #f1f3f4;
+            padding: 12px 16px;
+            border-radius: 18px;
+            margin-left: 50px;
+        }
+        
+        .dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #999;
+            margin-right: 3px;
+            animation: typing 1.4s infinite ease-in-out;
+        }
+        
+        .dot:nth-child(2) { animation-delay: 0.2s; }
+        .dot:nth-child(3) { animation-delay: 0.4s; margin-right: 0; }
+        
+        @keyframes typing {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-10px); }
+        }
+        
+        .quick-questions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+        
+        .quick-btn {
+            padding: 8px 16px;
+            background: linear-gradient(45deg, #E3F2FD, #BBDEFB);
+            border: 1px solid #2196F3;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.85em;
+            transition: all 0.3s ease;
+            color: #1976D2;
+        }
+        
+        .quick-btn:hover {
+            background: linear-gradient(45deg, #2196F3, #1976D2);
+            color: white;
+            transform: translateY(-2px);
+        }
+        
+        @media (max-width: 600px) {
+            .container {
+                margin: 0;
+                border-radius: 0;
+                min-height: 100vh;
+            }
+            
+            .header h1 { font-size: 1.3em; }
+            .bot-text, .user-text { max-width: 90%; }
+            .input-container { padding: 15px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌊 भूजल सहायक - Groundwater Assistant</h1>
+            <p>Ask about water levels in your area • किसी भी भाषा में पूछें</p>
+        </div>
+        
+        <div class="chat-container" id="chatContainer">
+            <div class="message bot-message">
+                <div class="bot-avatar">🤖</div>
+                <div class="bot-text">
+                    <strong>नमस्ते! Hello! السلام علیکم!</strong><br>
+                    I'm your groundwater assistant. Ask me about water levels in your village or district in any language!<br><br>
+                    <strong>Examples:</strong><br>
+                    • "मेरे गाँव में पानी की स्थिति कैसी है?"<br>
+                    • "What's the water level in Bangalore?"<br>
+                    • "బెంగళూర్ లో నీటి స్థితి ఎలా ఉంది?"
+                </div>
+            </div>
+            <div class="quick-questions">
+                <div class="quick-btn" onclick="sendQuickQuestion('मेरे गाँव में पानी की स्थिति कैसी है?')">पानी की स्थिति</div>
+                <div class="quick-btn" onclick="sendQuickQuestion('What is groundwater recharge?')">What is recharge?</div>
+                <div class="quick-btn" onclick="sendQuickQuestion('நீர் மட்டம் எப்படி இருக்கிறது?')">நீர் மட்டம்</div>
+                <div class="quick-btn" onclick="sendQuickQuestion('भूजल कैसे बचाएं?')">पानी बचाने के तरीके</div>
+            </div>
+        </div>
+        
+        <div class="typing-indicator" id="typingIndicator">
+            <div class="bot-avatar">🤖</div>
+            <div class="typing-dots">
+                <span class="dot"></span>
+                <span class="dot"></span>
+                <span class="dot"></span>
+            </div>
+        </div>
+        
+        <div class="input-container">
+            <div class="language-selector">
+                <div class="lang-btn active" data-lang="auto">Auto</div>
+                <div class="lang-btn" data-lang="en">English</div>
+                <div class="lang-btn" data-lang="hi">हिंदी</div>
+                <div class="lang-btn" data-lang="ur">اردو</div>
+                <div class="lang-btn" data-lang="ta">தமிழ்</div>
+                <div class="lang-btn" data-lang="te">తెలుగు</div>
+                <div class="lang-btn" data-lang="mr">मराठी</div>
+            </div>
+            <div class="input-group">
+                <textarea 
+                    class="input-field" 
+                    id="messageInput" 
+                    placeholder="Ask about groundwater in your area..."
+                    rows="1"
+                ></textarea>
+                <button class="send-btn" id="sendBtn" onclick="sendMessage()">▶</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentLanguage = 'auto';
+        let chatContainer = document.getElementById('chatContainer');
+        let messageInput = document.getElementById('messageInput');
+        let sendBtn = document.getElementById('sendBtn');
+        let typingIndicator = document.getElementById('typingIndicator');
+        
+        // Language selection
+        document.querySelectorAll('.lang-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentLanguage = btn.dataset.lang;
+                updatePlaceholder();
+            });
+        });
+        
+        function updatePlaceholder() {
+            const placeholders = {
+                'auto': 'Ask about groundwater in your area...',
+                'en': 'Ask about groundwater in your area...',
+                'hi': 'अपने क्षेत्र के भूजल के बारे में पूछें...',
+                'ur': 'اپنے علاقے کے زیر زمین پانی کے بارے میں پوچھیں...',
+                'ta': 'உங்கள் பகுதியில் நிலத்தடி நீர் பற்றி கேளுங்கள்...',
+                'te': 'మీ ప్రాంతంలో భూగర్భ జలాల గురించి అడగండి...',
+                'mr': 'आपल्या भागातील भूजल बद्दल विचारा...'
+            };
+            messageInput.placeholder = placeholders[currentLanguage];
+        }
+        
+        // Auto-resize textarea
+        messageInput.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+        });
+        
+        // Send message on Enter
+        messageInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+        
+        function sendQuickQuestion(question) {
+            messageInput.value = question;
+            sendMessage();
+        }
+        
+        async function sendMessage() {
+            const message = messageInput.value.trim();
+            if (!message) return;
+            
+            // Add user message
+            addUserMessage(message);
+            messageInput.value = '';
+            messageInput.style.height = 'auto';
+            
+            // Show typing indicator
+            showTyping();
+            
+            // Simulate AI response (replace with actual API call)
+            setTimeout(() => {
+                hideTyping();
+                processMessage(message);
+            }, 2000);
+        }
+        
+        function addUserMessage(message) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message user-message';
+            messageDiv.innerHTML = `<div class="user-text">${message}</div>`;
+            chatContainer.appendChild(messageDiv);
+            scrollToBottom();
+        }
+        
+        function addBotMessage(message) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message bot-message';
+            messageDiv.innerHTML = `
+                <div class="bot-avatar">🤖</div>
+                <div class="bot-text">${message}</div>
+            `;
+            chatContainer.appendChild(messageDiv);
+            scrollToBottom();
+        }
+        
+        function showTyping() {
+            typingIndicator.style.display = 'flex';
+            sendBtn.disabled = true;
+            scrollToBottom();
+        }
+        
+        function hideTyping() {
+            typingIndicator.style.display = 'none';
+            sendBtn.disabled = false;
+        }
+        
+        function scrollToBottom() {
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+        
+        async function processMessage(message) {
+            // This is where we'll integrate with the IN-GRES scraper and AI
+            // For now, showing demo responses
+            
+            const lowerMessage = message.toLowerCase();
+            let response = '';
+            
+            // Location detection
+            if (lowerMessage.includes('bangalore') || lowerMessage.includes('bengaluru')) {
+                response = `🌊 <strong>Bangalore Groundwater Status:</strong><br>
+                • Water Level: <span style="color: #4CAF50;">Good</span><br>
+                • Recharge Rate: 150mm annually<br>
+                • Category: Safe for extraction<br>
+                • Recommendation: Continue current usage patterns<br><br>
+                <em>Data from IN-GRES for 2024-25</em>`;
+            }
+            else if (lowerMessage.includes('गाँव') || lowerMessage.includes('village')) {
+                response = `🏘️ <strong>गाँव के भूजल की जानकारी के लिए:</strong><br>
+                कृपया अपने गाँव या जिले का नाम बताएं। मैं IN-GRES डेटा से जानकारी लाऊंगा।<br><br>
+                <strong>उदाहरण:</strong><br>
+                "रामपुर, उत्तर प्रदेश में पानी की स्थिति"<br>
+                "मुंबई के पास के गाँव में भूजल"`;
+            }
+            else if (lowerMessage.includes('recharge')) {
+                response = `💧 <strong>Groundwater Recharge:</strong><br>
+                Recharge is when rainwater soaks into the ground and refills underground water sources.<br><br>
+                <strong>How it works:</strong><br>
+                • Rainwater seeps through soil<br>
+                • Fills up underground rock spaces<br>
+                • Creates freshwater reserves<br><br>
+                <strong>Ways to increase recharge:</strong><br>
+                • Rainwater harvesting<br>
+                • Protecting wetlands<br>
+                • Reducing concrete surfaces`;
+            }
+            else if (lowerMessage.includes('बचाएं') || lowerMessage.includes('save')) {
+                response = `🌱 <strong>भूजल बचाने के तरीके:</strong><br>
+                1. <strong>बारिश का पानी इकट्ठा करें</strong> - छत से पानी टैंक में<br>
+                2. <strong>कम पानी वाली फसल उगाएं</strong><br>
+                3. <strong>ड्रिप सिंचाई का उपयोग करें</strong><br>
+                4. <strong>तालाब और कुओं की सफाई करें</strong><br>
+                5. <strong>पेड़ लगाएं</strong> - पानी को जमीन में जाने में मदद मिलती है<br><br>
+                <em>छोटे कदम, बड़ा बदलाव! 💚</em>`;
+            }
+            else {
+                response = `🤖 I understand you're asking about: "${message}"<br><br>
+                I'm still learning to access the IN-GRES database. Right now I can help with:<br><br>
+                • <strong>General groundwater information</strong><br>
+                • <strong>Water conservation tips</strong><br>
+                • <strong>Understanding water levels</strong><br><br>
+                For specific location data, please mention your district or village name, and I'll try to find the information from IN-GRES.`;
+            }
+            
+            addBotMessage(response);
+        }
+        
+        // Initialize
+        updatePlaceholder();
+    </script>
+</body>
+</html>
